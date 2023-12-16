@@ -1,4 +1,5 @@
 use anyhow::{bail, Result};
+use sqlite_starter_rust::{command, header::DatabaseHeader};
 use std::{env, fs::File, io::Read};
 
 fn main() -> Result<()> {
@@ -12,15 +13,11 @@ fn main() -> Result<()> {
     match command.as_str() {
         ".dbinfo" => {
             let mut file = File::open(&db_path)?;
-            let mut header = [0; 100];
-            file.read_exact(&mut header)?;
+            let mut raw_header = [0; 100];
+            file.read_exact(&mut raw_header)?;
 
-            // The page size is stored at the 16th byte offset, using 2 bytes in big-endian order
-            #[allow(unused_variables)]
-            let page_size = u16::from_be_bytes([header[16], header[17]]);
-
-            // Uncomment this block to pass the first stage
-            println!("database page size: {page_size}");
+            let (_, db_header) = DatabaseHeader::read(&raw_header).expect("Fail to read header");
+            command::db_info::exec(&db_header);
         }
         _ => bail!("Missing or invalid command passed: {}", command),
     }
