@@ -1,6 +1,7 @@
+use std::{env, fs};
+
 use anyhow::{bail, Result};
-use sqlite_starter_rust::{command, header::DatabaseHeader};
-use std::{env, fs::File, io::Read};
+use sqlite_starter_rust::{command, database::Database};
 
 fn main() -> Result<()> {
     // Parse arguments
@@ -12,12 +13,9 @@ fn main() -> Result<()> {
     // Parse command and act accordingly
     match command.as_str() {
         ".dbinfo" => {
-            let mut file = File::open(&db_path)?;
-            let mut raw_header = [0; 100];
-            file.read_exact(&mut raw_header)?;
-
-            let (_, db_header) = DatabaseHeader::read(&raw_header).expect("Fail to read header");
-            command::db_info::exec(&db_header);
+            let data = fs::read(&db_path).expect("Fail to read file content");
+            let (_, database) = Database::parse(&data).expect("Fail to read database");
+            command::db_info::exec(&database);
         }
         _ => bail!("Missing or invalid command passed: {}", command),
     }

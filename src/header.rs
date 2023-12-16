@@ -2,7 +2,7 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take},
     character::complete::char,
-    combinator::{value, verify},
+    combinator::value,
     number::complete::{be_u16, be_u32, be_u8},
     IResult,
 };
@@ -15,11 +15,11 @@ pub enum DatabaseTextEncoding {
 }
 
 impl DatabaseTextEncoding {
-    fn read(input: &[u8]) -> IResult<&[u8], Self> {
+    fn parse(input: &[u8]) -> IResult<&[u8], Self> {
         alt((
-            value(Self::Utf8, verify(be_u32, |x| *x == 1)),
-            value(Self::Utf16Le, verify(be_u32, |x| *x == 2)),
-            value(Self::Utf16Be, verify(be_u32, |x| *x == 3)),
+            value(Self::Utf8, tag([0, 0, 0, 1])),
+            value(Self::Utf16Le, tag([0, 0, 0, 2])),
+            value(Self::Utf16Be, tag([0, 0, 0, 3])),
         ))(input)
     }
 }
@@ -44,7 +44,7 @@ pub struct DatabaseHeader {
 }
 
 impl DatabaseHeader {
-    pub fn read(input: &[u8]) -> IResult<&[u8], Self> {
+    pub fn parse(input: &[u8]) -> IResult<&[u8], Self> {
         let (input, _) = tag(b"SQLite format 3\0")(input)?;
         let (input, page_size) = be_u16(input)?;
         let (input, write_format) = be_u8(input)?;
@@ -61,7 +61,7 @@ impl DatabaseHeader {
         let (input, schema_format) = be_u32(input)?;
         let (input, default_cache_size) = be_u32(input)?;
         let (input, _) = be_u32(input)?;
-        let (input, text_encoding) = DatabaseTextEncoding::read(input)?;
+        let (input, text_encoding) = DatabaseTextEncoding::parse(input)?;
         let (input, user_version) = be_u32(input)?;
         let (input, _) = be_u32(input)?;
         let (input, application_id) = be_u32(input)?;
