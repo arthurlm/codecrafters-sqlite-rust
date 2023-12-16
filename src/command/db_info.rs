@@ -1,6 +1,7 @@
-use crate::database::Database;
+use crate::{database::Database, pages::CellArray, schema::SqliteSchemaRow};
 
-pub fn exec(db: &Database) {
+pub fn exec(db: &mut Database) {
+    // Show global value configuration
     println!("database page size: {}", db.header.page_size);
     println!("write format:       {}", db.header.write_format);
     println!("read format:        {}", db.header.read_format);
@@ -18,13 +19,32 @@ pub fn exec(db: &Database) {
     println!("application id:     {}", db.header.application_id);
     println!("software version:   {}", db.header.software_version);
 
-    let first_page = db.page(1).expect("Fail to read first page");
-    let first_page_header = first_page.parse_header().expect("Fail to read page header");
-    // NOTE: Bellow result if a little bit wrong sqlite_schema can contains other things than table
-    println!("number of tables:   {}", first_page_header.cell_count);
-    // println!("number of indexes:  {}", 0);
-    // println!("number of triggers: {}", 0);
-    // println!("number of views:    {}", 0);
+    // Show schema configuration
+    let first_page = db.read_page(0).expect("Fail to read first page");
+
+    let mut table_count = 0;
+    let mut index_count = 0;
+    let mut triggers_count = 0;
+    let mut view_count = 0;
+
+    if let CellArray::LeafTable(cells) = first_page.cells {
+        for cell in cells {
+            let schema = SqliteSchemaRow::parse_cell(cell).expect("Fail to read cell content");
+            match schema.schema_type.as_str() {
+                "table" => table_count += 1,
+                "index" => index_count += 1,
+                "trigger" => triggers_count += 1,
+                "view" => view_count += 1,
+                _ => {}
+            }
+        }
+    }
+
+    println!("number of tables:   {}", table_count);
+    println!("number of indexes:  {}", index_count);
+    println!("number of triggers: {}", triggers_count);
+    println!("number of views:    {}", view_count);
+
     // println!("schema size:        {}", 217);
     // println!("data version        {}", 1);
 }

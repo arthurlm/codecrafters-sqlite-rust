@@ -1,26 +1,50 @@
-use nom::{bytes::complete::take, combinator::map, multi::count, IResult};
+use std::{
+    fs::File,
+    io::{BufReader, Read, Seek, SeekFrom},
+    path::Path,
+};
 
-use crate::{header::DatabaseHeader, pages::DatabasePage};
+use crate::{error::SqliteError, header::Header, pages::Page};
 
 #[derive(Debug)]
 pub struct Database {
-    pub header: DatabaseHeader,
-    pages: Vec<DatabasePage>,
+    pub header: Header,
+    reader: BufReader<File>,
 }
 
 impl Database {
-    pub fn parse(input: &[u8]) -> IResult<&[u8], Self> {
-        let (input, header) = DatabaseHeader::parse(input)?;
-        let (input, pages) = count(
-            map(take(header.page_size), DatabasePage::new),
-            (header.database_page_count - 1) as usize,
-        )(input)?;
+    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, SqliteError> {
+        let file = File::open(path)?;
+        let mut reader = BufReader::new(file);
 
-        Ok((input, Self { header, pages }))
+        let mut header_data = [0_u8; 100];
+        reader.read_exact(&mut header_data)?;
+        let (_, header) = Header::parse(&header_data)?;
+
+        Ok(Self { header, reader })
     }
 
-    pub fn page(&self, index: usize) -> Option<&DatabasePage> {
-        assert!(index > 0, "Page index=0 is reserved for DatabaseHeader");
-        self.pages.get(index - 1)
+    pub fn read_page(&mut self, index: usize) -> Result<Page, SqliteError> {
+        // Check index
+        if index >= self.header.database_page_count {
+            return Err(SqliteError::InvalidPageIndex);
+        }
+
+        let (first_byte_offset, first_byte) = if index == 0 {
+            (Header::SIZE, Header::SIZE)
+        } else {
+            (0, self.header.page_size * index)
+        };
+
+        let page_size = self.header.page_size - first_byte_offset;
+
+        // Read page content
+        let mut page_data = vec![0_u8; page_size];
+        self.reader.seek(SeekFrom::Start(first_byte as u64))?;
+        self.reader.read_exact(&mut page_data)?;
+
+        // Parse page content
+        let page = Page::parse(&page_data, first_byte_offset)?;
+        Ok(page)
     }
 }

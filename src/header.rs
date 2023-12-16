@@ -25,13 +25,13 @@ impl DatabaseTextEncoding {
 }
 
 #[derive(Debug)]
-pub struct DatabaseHeader {
-    pub page_size: u16,
+pub struct Header {
+    pub page_size: usize,
     pub write_format: u8,
     pub read_format: u8,
     pub reserved_bytes: u8,
     pub file_change_counter: u32,
-    pub database_page_count: u32,
+    pub database_page_count: usize,
     pub first_trunk_free_list_page_number: u32,
     pub free_list_page_count: u32,
     pub schema_cookie: u32,
@@ -43,7 +43,9 @@ pub struct DatabaseHeader {
     pub software_version: u32,
 }
 
-impl DatabaseHeader {
+impl Header {
+    pub const SIZE: usize = 100;
+
     pub fn parse(input: &[u8]) -> IResult<&[u8], Self> {
         let (input, _) = tag(b"SQLite format 3\0")(input)?;
         let (input, page_size) = be_u16(input)?;
@@ -72,12 +74,12 @@ impl DatabaseHeader {
         Ok((
             input,
             Self {
-                page_size,
+                page_size: page_size as usize,
                 write_format,
                 read_format,
                 reserved_bytes,
                 file_change_counter,
-                database_page_count,
+                database_page_count: database_page_count as usize,
                 first_trunk_free_list_page_number,
                 free_list_page_count,
                 schema_cookie,
