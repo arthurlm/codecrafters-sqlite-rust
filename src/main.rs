@@ -1,9 +1,8 @@
 use std::env;
 
-use anyhow::{bail, Result};
 use sqlite_starter_rust::{command, database::Database};
 
-fn main() -> Result<()> {
+fn main() -> anyhow::Result<()> {
     // Parse arguments
     let db_path = env::args()
         .nth(1)
@@ -26,7 +25,9 @@ fn main() -> Result<()> {
             let table_name = x.split(' ').last().expect("Missing table name");
             command::count::exec(&mut database, table_name);
         }
-        _ => bail!("Missing or invalid command passed: {}", command),
+        _ => {
+            command::sql_command::exec(&mut database, &command);
+        }
     }
 
     Ok(())

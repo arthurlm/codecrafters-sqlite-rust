@@ -1,3 +1,5 @@
+use std::fmt;
+
 use nom::{
     bytes::complete::take,
     combinator::map,
@@ -41,6 +43,18 @@ impl CellValue {
                 let content = String::from_utf8_lossy(raw_content).to_string();
                 Ok((input, Self::Text(content)))
             }
+        }
+    }
+}
+
+impl fmt::Display for CellValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CellValue::Null => write!(f, "null"),
+            CellValue::Number(v) => write!(f, "{v}"),
+            CellValue::Float(v) => write!(f, "{v}"),
+            CellValue::Blob(v) => write!(f, "{v:?}"),
+            CellValue::Text(v) => write!(f, "{v}"),
         }
     }
 }
