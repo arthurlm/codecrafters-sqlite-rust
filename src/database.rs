@@ -66,4 +66,11 @@ impl Database {
 
         Ok(output)
     }
+
+    pub fn find_table_schema(&mut self, table_name: &str) -> Result<SqliteSchemaRow, SqliteError> {
+        self.schema_rows()?
+            .into_iter()
+            .find(|x| x.tbl_name == table_name)
+            .ok_or(SqliteError::TableNotFound)
+    }
 }

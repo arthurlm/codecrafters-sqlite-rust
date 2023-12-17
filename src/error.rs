@@ -15,6 +15,9 @@ pub enum SqliteError {
 
     #[error("Invalid Sqlite schema")]
     InvalidSqliteSchema,
+
+    #[error("Table not found")]
+    TableNotFound,
 }
 
 impl From<io::Error> for SqliteError {
