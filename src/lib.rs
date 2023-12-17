@@ -8,5 +8,6 @@ pub mod command {
 }
 pub mod database;
 pub mod error;
+pub mod lang;
 pub mod schema;
 pub mod utils;
