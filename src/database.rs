@@ -4,7 +4,12 @@ use std::{
     path::Path,
 };
 
-use crate::{error::SqliteError, header::Header, pages::Page};
+use crate::{
+    error::SqliteError,
+    header::Header,
+    pages::{CellArray, Page},
+    schema::SqliteSchemaRow,
+};
 
 #[derive(Debug)]
 pub struct Database {
@@ -46,5 +51,19 @@ impl Database {
         // Parse page content
         let page = Page::parse(&page_data, first_byte_offset)?;
         Ok(page)
+    }
+
+    pub fn schema_rows(&mut self) -> Result<Vec<SqliteSchemaRow>, SqliteError> {
+        let first_page = self.read_page(0)?;
+        let mut output = Vec::with_capacity(first_page.cells.len());
+
+        if let CellArray::LeafTable(cells) = first_page.cells {
+            for cell in cells {
+                let schema_row = SqliteSchemaRow::parse_cell(cell)?;
+                output.push(schema_row);
+            }
+        }
+
+        Ok(output)
     }
 }

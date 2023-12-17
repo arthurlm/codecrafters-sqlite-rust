@@ -1,4 +1,4 @@
-use crate::{database::Database, pages::CellArray, schema::SqliteSchemaRow};
+use crate::database::Database;
 
 pub fn exec(db: &mut Database) {
     // Show global value configuration
@@ -20,23 +20,18 @@ pub fn exec(db: &mut Database) {
     println!("software version:   {}", db.header.software_version);
 
     // Show schema configuration
-    let first_page = db.read_page(0).expect("Fail to read first page");
-
     let mut table_count = 0;
     let mut index_count = 0;
     let mut triggers_count = 0;
     let mut view_count = 0;
 
-    if let CellArray::LeafTable(cells) = first_page.cells {
-        for cell in cells {
-            let schema = SqliteSchemaRow::parse_cell(cell).expect("Fail to read cell content");
-            match schema.schema_type.as_str() {
-                "table" => table_count += 1,
-                "index" => index_count += 1,
-                "trigger" => triggers_count += 1,
-                "view" => view_count += 1,
-                _ => {}
-            }
+    for schema_row in db.schema_rows().expect("Fail to read DB schema") {
+        match schema_row.schema_type.as_str() {
+            "table" => table_count += 1,
+            "index" => index_count += 1,
+            "trigger" => triggers_count += 1,
+            "view" => view_count += 1,
+            _ => {}
         }
     }
 

@@ -35,6 +35,17 @@ pub struct LeafTableCell {
     pub payload: CellPayload,
 }
 
+impl CellArray {
+    pub fn len(&self) -> usize {
+        match self {
+            CellArray::InteriorIndex(x) => x.len(),
+            CellArray::InteriorTable(x) => x.len(),
+            CellArray::LeafIndex(x) => x.len(),
+            CellArray::LeafTable(x) => x.len(),
+        }
+    }
+}
+
 pub trait CellParsable {
     fn parse(input: &[u8]) -> Result<Self, SqliteError>
     where
