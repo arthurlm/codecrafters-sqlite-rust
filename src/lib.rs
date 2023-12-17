@@ -3,6 +3,7 @@ pub mod pages;
 pub mod command {
     pub mod count;
     pub mod db_info;
+    pub mod schema;
     pub mod table;
 }
 pub mod database;

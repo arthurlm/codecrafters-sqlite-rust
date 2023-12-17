@@ -19,6 +19,9 @@ fn main() -> Result<()> {
         ".tables" => {
             command::table::exec(&mut database);
         }
+        ".schema" => {
+            command::schema::exec(&mut database);
+        }
         x if x.starts_with("select count(*) from ") => {
             let table_name = x.split(' ').last().expect("Missing table name");
             command::count::exec(&mut database, table_name);
