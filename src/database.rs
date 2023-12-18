@@ -62,4 +62,15 @@ impl Database {
             .find(|x| x.tbl_name == table_name && x.schema_type == "table")
             .ok_or(SqliteError::TableNotFound)
     }
+
+    pub fn find_table_indexes(
+        &mut self,
+        table_name: &str,
+    ) -> Result<Vec<SqliteSchemaRow>, SqliteError> {
+        let rows = self.schema_rows()?;
+        Ok(rows
+            .into_iter()
+            .filter(|x| x.tbl_name == table_name && x.schema_type == "index")
+            .collect())
+    }
 }

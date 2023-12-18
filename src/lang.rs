@@ -164,3 +164,11 @@ pub fn create_index(name: &str, table_name: &str, columns: &[&str]) -> SqlTree {
         columns: columns.iter().map(|c| c.to_string()).collect(),
     }
 }
+
+pub fn is_index_for(sql: &SqlTree, requested_table_name: &str, requested_columns: &[&str]) -> bool {
+    matches!(sql, SqlTree::CreateIndex {
+        table_name,
+        columns,
+        ..
+    } if table_name  == requested_table_name && columns == requested_columns)
+}

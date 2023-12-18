@@ -24,6 +24,9 @@ pub enum SqliteError {
 
     #[error("Table not found")]
     TableNotFound,
+
+    #[error("row ID not found")]
+    RowIdNotFound,
 }
 
 impl From<io::Error> for SqliteError {
