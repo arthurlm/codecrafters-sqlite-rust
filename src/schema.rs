@@ -13,8 +13,8 @@ pub struct SqliteSchemaRow {
 }
 
 impl SqliteSchemaRow {
-    pub fn parse_cell(cell: LeafTableCell) -> Result<Self, SqliteError> {
-        let mut cell_values = cell.payload.values.into_iter();
+    pub fn parse_cell(cell: &LeafTableCell) -> Result<Self, SqliteError> {
+        let mut cell_values = cell.payload.values.iter();
 
         let Some(CellValue::Text(schema_type)) = cell_values.next() else {
             return Err(SqliteError::InvalidSqliteSchema);
@@ -33,11 +33,11 @@ impl SqliteSchemaRow {
         };
 
         Ok(Self {
-            schema_type,
-            name,
-            tbl_name,
-            root_page: root_page as usize,
-            sql,
+            schema_type: schema_type.clone(),
+            name: name.clone(),
+            tbl_name: tbl_name.clone(),
+            root_page: *root_page as usize,
+            sql: sql.clone(),
         })
     }
 }

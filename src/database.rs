@@ -5,10 +5,7 @@ use std::{
 };
 
 use crate::{
-    error::SqliteError,
-    header::Header,
-    pages::{CellArray, Page},
-    schema::SqliteSchemaRow,
+    error::SqliteError, header::Header, pages::Page, schema::SqliteSchemaRow, walker::CellWalker,
 };
 
 #[derive(Debug)]
@@ -54,23 +51,15 @@ impl Database {
     }
 
     pub fn schema_rows(&mut self) -> Result<Vec<SqliteSchemaRow>, SqliteError> {
-        let first_page = self.read_page(0)?;
-        let mut output = Vec::with_capacity(first_page.cells.len());
-
-        if let CellArray::LeafTable(cells) = first_page.cells {
-            for cell in cells {
-                let schema_row = SqliteSchemaRow::parse_cell(cell)?;
-                output.push(schema_row);
-            }
-        }
-
-        Ok(output)
+        let mut walker = CellWalker::new(self, 0)?;
+        let entries = walker.for_each_table_entry(|cell| SqliteSchemaRow::parse_cell(cell))?;
+        Ok(entries.into_iter().flat_map(|x| x.ok()).collect())
     }
 
     pub fn find_table_schema(&mut self, table_name: &str) -> Result<SqliteSchemaRow, SqliteError> {
         self.schema_rows()?
             .into_iter()
-            .find(|x| x.tbl_name == table_name)
+            .find(|x| x.tbl_name == table_name && x.schema_type == "table")
             .ok_or(SqliteError::TableNotFound)
     }
 }

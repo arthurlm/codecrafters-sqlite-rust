@@ -17,27 +17,25 @@ impl<'a> CellWalker<'a> {
         Ok(Self { database, page })
     }
 
-    pub fn for_each_table_entry<F>(&'a mut self, f: F) -> Result<(), SqliteError>
+    pub fn for_each_table_entry<F, O>(&'a mut self, f: F) -> Result<Vec<O>, SqliteError>
     where
-        F: Fn(&LeafTableCell) + Clone,
+        F: Fn(&LeafTableCell) -> O + Clone,
     {
         match &self.page.cells {
             // Handle leaf
-            CellArray::LeafTable(cells) => {
-                for cell in cells {
-                    f(cell)
-                }
-                Ok(())
-            }
+            CellArray::LeafTable(cells) => Ok(cells.iter().map(f).collect()),
 
             // Handle interior with recursion
             CellArray::InteriorTable(cells) => {
+                let mut output = Vec::new();
                 for cell in cells {
                     let mut sub_walker =
                         CellWalker::new(self.database, cell.left_child_pointer - 1)?;
-                    sub_walker.for_each_table_entry(f.clone())?;
+
+                    let output_chunk = sub_walker.for_each_table_entry(f.clone())?;
+                    output.extend(output_chunk);
                 }
-                Ok(())
+                Ok(output)
             }
 
             // Ignore invalid page table type
