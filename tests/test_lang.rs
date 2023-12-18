@@ -4,7 +4,18 @@ use sqlite_starter_rust::lang::*;
 fn test_debug() {
     assert_eq!(
         format!("{:?}", select(&["col1", "col2"], "my_table")),
-        "Select { columns: [\"col1\", \"col2\"], table_name: \"my_table\" }"
+        "Select { columns: [\"col1\", \"col2\"], table_name: \"my_table\", where: None }"
+    );
+    assert_eq!(
+        format!(
+            "{:?}",
+            select_where(&["col1", "col2"], "my_table", "foo", "bar")
+        ),
+        "Select { \
+            columns: [\"col1\", \"col2\"], \
+            table_name: \"my_table\", \
+            where: Some(WhereClause { column_name: \"foo\", value: \"bar\" }) \
+         }"
     );
     assert_eq!(
         format!("{:?}", ColumnDefinition::new("id", "integer")),
@@ -33,6 +44,20 @@ fn test_identifier_invalid() {
 }
 
 #[test]
+fn test_raw_string_valid() {
+    raw_string("''").unwrap();
+    raw_string("'hello world that cont4ain5 w3eird chars !'").unwrap();
+}
+
+#[test]
+fn test_raw_string_invalid() {
+    raw_string("").unwrap_err();
+    raw_string("'").unwrap_err();
+    raw_string("'''").unwrap_err();
+    raw_string("' '  '").unwrap_err();
+}
+
+#[test]
 fn test_valid_select() {
     // Test single column sequence
     assert_eq!(
@@ -52,6 +77,23 @@ fn test_valid_select() {
     assert_eq!(
         parse_sql("select c1  ,  c2 ,   c3 , c4 from foo").unwrap(),
         select(&["c1", "c2", "c3", "c4"], "foo")
+    );
+
+    // Test with where statement
+    assert_eq!(
+        parse_sql("select c1,c2 from foo where x='bar'").unwrap(),
+        select_where(&["c1", "c2"], "foo", "x", "bar")
+    );
+    assert_eq!(
+        parse_sql(
+            "select   c1,   c2  \n\
+             from  \n\t  foo \n\
+             where   \n
+                x  \n = \n\t  'bar' \n
+             "
+        )
+        .unwrap(),
+        select_where(&["c1", "c2"], "foo", "x", "bar")
     );
 }
 

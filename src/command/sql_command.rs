@@ -14,6 +14,7 @@ pub fn exec(db: &mut Database, expression: &str) {
     let Ok(SqlTree::Select {
         columns: column_names,
         table_name,
+        ..
     }) = parse_sql(&expression.to_lowercase())
     else {
         panic!("SQL command is not a valid SELECT statement");

@@ -7,8 +7,15 @@ peg::parser!(
 
         rule select_statement() -> SqlTree
             = "select" _ columns:(identifier() ++ (_* "," _*))
-            _ "from" _ table_name:identifier() {
-                SqlTree::Select { columns, table_name }
+            _ "from" _ table_name:identifier()
+            r#where:where_statement()?
+            _* {
+                SqlTree::Select { columns, table_name, r#where }
+            }
+
+        rule where_statement() -> WhereClause
+            = _ "where" _ column_name:identifier() _* "=" _* value:raw_string() {
+                WhereClause { column_name, value }
             }
 
         rule create_table_statement() -> SqlTree
@@ -31,23 +38,33 @@ peg::parser!(
                 }
             }
 
+        pub rule raw_string() -> String
+            = "'" value:$([^'\'']*) "'" { value.to_string()}
+
         pub rule identifier() -> String
             = v:$(['a'..='z' | 'A'..='Z' | '_']+['a'..='z' | 'A'..='Z' | '0'..='9' | '_']*) { v.to_string() }
         }
 );
 
-pub use sql_parser::{expression as parse_sql, identifier};
+pub use sql_parser::{expression as parse_sql, identifier, raw_string};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum SqlTree {
     Select {
         columns: Vec<String>,
         table_name: String,
+        r#where: Option<WhereClause>,
     },
     CreateTable {
         table_name: String,
         columns_def: Vec<ColumnDefinition>,
     },
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct WhereClause {
+    column_name: String,
+    value: String,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -83,6 +100,23 @@ pub fn select(columns: &[&str], table_name: &str) -> SqlTree {
     SqlTree::Select {
         columns: columns.iter().map(|c| c.to_string()).collect(),
         table_name: table_name.to_string(),
+        r#where: None,
+    }
+}
+
+pub fn select_where(
+    columns: &[&str],
+    table_name: &str,
+    filter_column: &str,
+    filter_value: &str,
+) -> SqlTree {
+    SqlTree::Select {
+        columns: columns.iter().map(|c| c.to_string()).collect(),
+        table_name: table_name.to_string(),
+        r#where: Some(WhereClause {
+            column_name: filter_column.to_string(),
+            value: filter_value.to_string(),
+        }),
     }
 }
 
