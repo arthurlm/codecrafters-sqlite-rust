@@ -6,6 +6,7 @@ pub mod pages;
 pub mod schema;
 pub mod schema_def;
 pub mod utils;
+pub mod walker;
 
 pub mod command {
     pub mod count;

@@ -1,8 +1,9 @@
 use crate::{
     database::Database,
     lang::{parse_sql, SqlTree, WhereClause},
-    pages::{CellArray, LeafTableCell},
+    pages::LeafTableCell,
     schema_def::SchemaDefinition,
+    walker::CellWalker,
 };
 
 struct ColumnInfo {
@@ -56,7 +57,7 @@ pub fn exec(db: &mut Database, expression: &str) {
         columns: column_names,
         table_name,
         r#where,
-    }) = parse_sql(&expression)
+    }) = parse_sql(expression)
     else {
         panic!("SQL command is not a valid SELECT statement");
     };
@@ -82,16 +83,14 @@ pub fn exec(db: &mut Database, expression: &str) {
         .collect();
 
     // PRINT value from SQL table.
-    let root_page = db
-        .read_page(schema_row.root_page - 1)
-        .expect("Fail to read DB root page");
+    let mut walker =
+        CellWalker::new(db, schema_row.root_page - 1).expect("Fail to create table iterator");
 
-    // TODO: Handle BTree cells types
-    if let CellArray::LeafTable(cells) = root_page.cells {
-        for cell in cells {
-            if is_included(&cell, r#where.as_ref(), &schema_def) {
-                print_sql_line(&cell, &column_infos);
+    walker
+        .for_each_table_entry(|cell| {
+            if is_included(cell, r#where.as_ref(), &schema_def) {
+                print_sql_line(cell, &column_infos);
             }
-        }
-    }
+        })
+        .expect("Fail to walk table entries");
 }

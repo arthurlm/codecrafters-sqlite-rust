@@ -14,13 +14,13 @@ pub enum CellArray {
 
 #[derive(Debug)]
 pub struct InteriorIndexCell {
-    pub left_child_pointer: u32,
+    pub left_child_pointer: usize,
     pub payload: CellPayload,
 }
 
 #[derive(Debug)]
 pub struct InteriorTableCell {
-    pub left_child_pointer: u32,
+    pub left_child_pointer: usize,
     pub row_id: i64,
 }
 
@@ -44,6 +44,10 @@ impl CellArray {
             CellArray::LeafTable(x) => x.len(),
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 pub trait CellParsable {
@@ -60,7 +64,7 @@ impl CellParsable for InteriorIndexCell {
         let payload = CellPayload::parse(raw_payload)?;
 
         Ok(Self {
-            left_child_pointer,
+            left_child_pointer: left_child_pointer as usize,
             payload,
         })
     }
@@ -71,7 +75,7 @@ impl CellParsable for InteriorTableCell {
         let (input, left_child_pointer) = be_u32(input)?;
         let (_, row_id) = parse_varint(input)?;
         Ok(Self {
-            left_child_pointer,
+            left_child_pointer: left_child_pointer as usize,
             row_id,
         })
     }

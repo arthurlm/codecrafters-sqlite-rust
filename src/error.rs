@@ -13,6 +13,9 @@ pub enum SqliteError {
     #[error("Invalid page index")]
     InvalidPageIndex,
 
+    #[error("Invalid page type")]
+    InvalidPageType,
+
     #[error("Invalid Sqlite schema")]
     InvalidSqliteSchema,
 
