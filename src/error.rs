@@ -2,7 +2,7 @@ use std::io;
 
 use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq, Eq)]
 pub enum SqliteError {
     #[error("I/O: {0}")]
     Io(String),
@@ -15,6 +15,9 @@ pub enum SqliteError {
 
     #[error("Invalid Sqlite schema")]
     InvalidSqliteSchema,
+
+    #[error("Missing primary key")]
+    MissingPrimaryKey,
 
     #[error("Table not found")]
     TableNotFound,

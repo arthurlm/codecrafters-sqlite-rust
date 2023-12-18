@@ -2,6 +2,7 @@ use crate::{
     database::Database,
     lang::{parse_sql, SqlTree},
     pages::CellArray,
+    schema_def::SchemaDefinition,
 };
 
 struct ColumnInfo {
@@ -26,24 +27,19 @@ pub fn exec(db: &mut Database, expression: &str) {
         .find_table_schema(&table_name)
         .expect("Cannot find table");
 
-    let Ok(SqlTree::CreateTable { columns_def, .. }) = parse_sql(&schema_row.sql.to_lowercase())
-    else {
-        panic!("Cannot parse SQL schema");
-    };
+    let schema_sql = parse_sql(&schema_row.sql.to_lowercase()).expect("Fail to parse SQL schema");
+    let schema_def = SchemaDefinition::try_from(&schema_sql).expect("Fail to convert SQL create");
 
     // 2. Find requested column index
-    let mut column_infos = Vec::with_capacity(column_names.len());
-    for column_name in column_names {
-        let index = columns_def
-            .iter()
-            .position(|c| c.name == column_name)
-            .expect("Cannot find requested column in schema");
-
-        column_infos.push(ColumnInfo {
-            index,
-            is_pk: columns_def[index].is_primary_key,
-        });
-    }
+    let column_infos: Vec<_> = column_names
+        .iter()
+        .map(|column_name| ColumnInfo {
+            index: schema_def
+                .column_index(column_name)
+                .expect("Cannot find requested column in schema"),
+            is_pk: schema_def.is_pk(column_name),
+        })
+        .collect();
 
     // PRINT value from SQL table.
     let root_page = db
