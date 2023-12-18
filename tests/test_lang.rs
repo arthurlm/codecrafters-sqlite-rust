@@ -165,6 +165,43 @@ fn test_valid_create_table() {
     );
 }
 
+#[test]
+fn test_valid_create_index() {
+    // Single column index
+    assert_eq!(
+        parse_sql("create index my_index on my_table(col1)").unwrap(),
+        create_index("my_index", "my_table", &["col1"])
+    );
+    assert_eq!(
+        parse_sql(
+            "CREATE   INDEX   'my_index'
+             On   \"my_table\"  (
+                'col1'
+            )"
+        )
+        .unwrap(),
+        create_index("my_index", "my_table", &["col1"])
+    );
+
+    // Multi column index
+    assert_eq!(
+        parse_sql("create index my_index on my_table(col1,col2,col3)").unwrap(),
+        create_index("my_index", "my_table", &["col1", "col2", "col3"])
+    );
+    assert_eq!(
+        parse_sql(
+            "CREATE   INDEX   'my_index'
+             On   \"my_table\"  (
+                'col1' ,
+                col2   ,
+                \"col3\"
+            )"
+        )
+        .unwrap(),
+        create_index("my_index", "my_table", &["col1", "col2", "col3"])
+    );
+}
+
 fn check_err(input: &str) {
     parse_sql(input).unwrap_err();
 }

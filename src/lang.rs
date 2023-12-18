@@ -1,7 +1,9 @@
 peg::parser!(
     grammar sql_parser() for str {
         pub rule expression() -> SqlTree
-            = select_statement() / create_table_statement()
+            = select_statement()
+            / create_table_statement()
+            / create_index_statement()
 
         rule _ = quiet!{[' ' | '\t' | '\n']+}
 
@@ -39,6 +41,15 @@ peg::parser!(
                 }
             }
 
+        rule create_index_statement() -> SqlTree
+            = i("create") _ i("index") _ name:identifier()
+            _ i("on") _ table_name:identifier()
+            _* "("
+            _* columns:(identifier() ++ (_* "," _*))
+            _* ")" {
+                SqlTree::CreateIndex { name, table_name, columns }
+            }
+
         pub rule raw_string() -> String
             = single_quote_string() / double_quote_string()
 
@@ -72,6 +83,11 @@ pub enum SqlTree {
     CreateTable {
         table_name: String,
         columns_def: Vec<ColumnDefinition>,
+    },
+    CreateIndex {
+        name: String,
+        table_name: String,
+        columns: Vec<String>,
     },
 }
 
@@ -138,5 +154,13 @@ pub fn create_table(table_name: &str, columns: &[ColumnDefinition]) -> SqlTree {
     SqlTree::CreateTable {
         table_name: table_name.to_string(),
         columns_def: columns.to_vec(),
+    }
+}
+
+pub fn create_index(name: &str, table_name: &str, columns: &[&str]) -> SqlTree {
+    SqlTree::CreateIndex {
+        name: name.to_string(),
+        table_name: table_name.to_string(),
+        columns: columns.iter().map(|c| c.to_string()).collect(),
     }
 }
