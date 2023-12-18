@@ -65,7 +65,7 @@ fn test_valid_select() {
         select(&["toto"], "foo")
     );
     assert_eq!(
-        parse_sql("select column_WITH_42long_NaMe from Bar").unwrap(),
+        parse_sql("SELECT column_WITH_42long_NaMe FROM Bar").unwrap(),
         select(&["column_WITH_42long_NaMe"], "Bar")
     );
 
@@ -75,8 +75,8 @@ fn test_valid_select() {
         select(&["c1", "c2"], "foo")
     );
     assert_eq!(
-        parse_sql("select c1  ,  c2 ,   c3 , c4 from foo").unwrap(),
-        select(&["c1", "c2", "c3", "c4"], "foo")
+        parse_sql("SELECT C1  ,  C2 ,   C3 , C4 FROM FOO").unwrap(),
+        select(&["C1", "C2", "C3", "C4"], "FOO")
     );
 
     // Test with where statement
@@ -86,9 +86,9 @@ fn test_valid_select() {
     );
     assert_eq!(
         parse_sql(
-            "select   c1,   c2  \n\
-             from  \n\t  foo \n\
-             where   \n
+            "sELECt   c1,   c2  \n\
+             fROm  \n\t  foo \n\
+             wHERe   \n
                 x  \n = \n\t  'bar' \n
              "
         )
@@ -105,7 +105,7 @@ fn test_valid_create_table() {
         create_table("my_table", &[ColumnDefinition::new("key", "string")])
     );
     assert_eq!(
-        parse_sql("create    table    my_table   \n  \n   (  \n \n   key string \n )").unwrap(),
+        parse_sql("CREATE    TABLE    my_table   \n  \n   (  \n \n   key string \n )").unwrap(),
         create_table("my_table", &[ColumnDefinition::new("key", "string")])
     );
 
@@ -130,7 +130,7 @@ fn test_valid_create_table() {
         parse_sql(
             "create   table    my_table   \n\
              (   \n\
-                id    integer    primary    key  autoincrement  ,  \n\
+                id    integer    PRIMARY    KEY  AUTOINCREMENT  ,  \n\
                 name   text , \n\
                 color text  \n\
              )"

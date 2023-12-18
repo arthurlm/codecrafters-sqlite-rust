@@ -11,7 +11,7 @@ fn main() -> anyhow::Result<()> {
     let mut database = Database::open(db_path).expect("Fail to open database");
 
     // Parse command and act accordingly
-    match command.to_lowercase().as_str() {
+    match command.as_str() {
         ".dbinfo" => {
             command::db_info::exec(&mut database);
         }

@@ -6,20 +6,20 @@ peg::parser!(
         rule _ = quiet!{[' ' | '\t' | '\n']+}
 
         rule select_statement() -> SqlTree
-            = "select" _ columns:(identifier() ++ (_* "," _*))
-            _ "from" _ table_name:identifier()
+            = i("select") _ columns:(identifier() ++ (_* "," _*))
+            _ i("from") _ table_name:identifier()
             r#where:where_statement()?
             _* {
                 SqlTree::Select { columns, table_name, r#where }
             }
 
         rule where_statement() -> WhereClause
-            = _ "where" _ column_name:identifier() _* "=" _* value:raw_string() {
+            = _ i("where") _ column_name:identifier() _* "=" _* value:raw_string() {
                 WhereClause { column_name, value }
             }
 
         rule create_table_statement() -> SqlTree
-            = "create" _ "table" _ table_name:identifier()
+            = i("create") _ i("table") _ table_name:identifier()
                 _* "("
                 _* columns_def:(column_definition() ++ (_* "," _*))
                 _* ")" {
@@ -28,8 +28,8 @@ peg::parser!(
 
         rule column_definition() -> ColumnDefinition
             = name:identifier() _ column_type:identifier()
-                pk:(_ "primary" _ "key")?
-                ai:(_ "autoincrement")? {
+                pk:(_ i("primary") _ i("key"))?
+                ai:(_ i("autoincrement"))? {
                 ColumnDefinition {
                     name,
                     column_type,
@@ -43,7 +43,12 @@ peg::parser!(
 
         pub rule identifier() -> String
             = v:$(['a'..='z' | 'A'..='Z' | '_']+['a'..='z' | 'A'..='Z' | '0'..='9' | '_']*) { v.to_string() }
-        }
+
+        // Check: https://github.com/kevinmehall/rust-peg/issues/216
+        rule i(literal: &'static str)
+            = input:$([_]*<{literal.len()}>)
+            {? if input.eq_ignore_ascii_case(literal) { Ok(()) } else { Err(literal) } }
+    }
 );
 
 pub use sql_parser::{expression as parse_sql, identifier, raw_string};

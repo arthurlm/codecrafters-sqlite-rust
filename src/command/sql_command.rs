@@ -30,8 +30,7 @@ fn is_included(
                 cell.payload.values[where_col_index].to_string()
             };
 
-            // FIXME: remove all this lowercase check everywhere
-            clause.value.to_lowercase() == where_col_value.to_lowercase()
+            clause.value == where_col_value
         }
     }
 }
@@ -57,7 +56,7 @@ pub fn exec(db: &mut Database, expression: &str) {
         columns: column_names,
         table_name,
         r#where,
-    }) = parse_sql(&expression.to_lowercase())
+    }) = parse_sql(&expression)
     else {
         panic!("SQL command is not a valid SELECT statement");
     };
@@ -68,7 +67,7 @@ pub fn exec(db: &mut Database, expression: &str) {
         .find_table_schema(&table_name)
         .expect("Cannot find table");
 
-    let schema_sql = parse_sql(&schema_row.sql.to_lowercase()).expect("Fail to parse SQL schema");
+    let schema_sql = parse_sql(&schema_row.sql).expect("Fail to parse SQL schema");
     let schema_def = SchemaDefinition::try_from(&schema_sql).expect("Fail to convert SQL create");
 
     // 2. Find requested column index
