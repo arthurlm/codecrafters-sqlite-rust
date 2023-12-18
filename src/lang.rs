@@ -63,8 +63,8 @@ pub enum SqlTree {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct WhereClause {
-    column_name: String,
-    value: String,
+    pub column_name: String,
+    pub value: String,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]

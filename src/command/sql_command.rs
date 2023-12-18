@@ -1,7 +1,7 @@
 use crate::{
     database::Database,
-    lang::{parse_sql, SqlTree},
-    pages::CellArray,
+    lang::{parse_sql, SqlTree, WhereClause},
+    pages::{CellArray, LeafTableCell},
     schema_def::SchemaDefinition,
 };
 
@@ -10,12 +10,53 @@ struct ColumnInfo {
     is_pk: bool,
 }
 
+fn is_included(
+    cell: &LeafTableCell,
+    r#where: Option<&WhereClause>,
+    schema_def: &SchemaDefinition<'_>,
+) -> bool {
+    match r#where {
+        // No filtering
+        None => true,
+        // Eval where clause
+        Some(clause) => {
+            let where_col_value = if schema_def.is_pk(&clause.column_name) {
+                cell.row_id.to_string()
+            } else {
+                let where_col_index = schema_def
+                    .column_index(&clause.column_name)
+                    .expect("Invalid WHERE column name");
+
+                cell.payload.values[where_col_index].to_string()
+            };
+
+            // FIXME: remove all this lowercase check everywhere
+            clause.value.to_lowercase() == where_col_value.to_lowercase()
+        }
+    }
+}
+
+fn print_sql_line(cell: &LeafTableCell, column_infos: &[ColumnInfo]) {
+    for (screen_id, column_info) in column_infos.iter().enumerate() {
+        if screen_id != 0 {
+            print!("|");
+        }
+
+        if column_info.is_pk {
+            print!("{}", cell.row_id);
+        } else {
+            print!("{}", cell.payload.values[column_info.index]);
+        }
+    }
+    println!()
+}
+
 pub fn exec(db: &mut Database, expression: &str) {
     // READ and check user input
     let Ok(SqlTree::Select {
         columns: column_names,
         table_name,
-        ..
+        r#where,
     }) = parse_sql(&expression.to_lowercase())
     else {
         panic!("SQL command is not a valid SELECT statement");
@@ -49,18 +90,9 @@ pub fn exec(db: &mut Database, expression: &str) {
     // TODO: Handle BTree cells types
     if let CellArray::LeafTable(cells) = root_page.cells {
         for cell in cells {
-            for (screen_id, column_info) in column_infos.iter().enumerate() {
-                if screen_id != 0 {
-                    print!("|");
-                }
-
-                if column_info.is_pk {
-                    print!("{}", cell.row_id);
-                } else {
-                    print!("{}", cell.payload.values[column_info.index]);
-                }
+            if is_included(&cell, r#where.as_ref(), &schema_def) {
+                print_sql_line(&cell, &column_infos);
             }
-            println!()
         }
     }
 }
