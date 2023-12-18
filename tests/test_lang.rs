@@ -32,6 +32,8 @@ fn test_identifier_valid() {
     identifier("h4").unwrap();
     identifier("_").unwrap();
     identifier("column_WITH_42long_NaMe").unwrap();
+    identifier("'hello world'").unwrap();
+    identifier("\"hello world\"").unwrap();
 }
 
 #[test]
@@ -41,20 +43,34 @@ fn test_identifier_invalid() {
     identifier("he llo").unwrap_err();
     identifier("4").unwrap_err();
     identifier("4lo").unwrap_err();
+    identifier("'hello world").unwrap_err();
+    identifier("\"hello world").unwrap_err();
 }
 
 #[test]
 fn test_raw_string_valid() {
     raw_string("''").unwrap();
+    raw_string("\"\"").unwrap();
     raw_string("'hello world that cont4ain5 w3eird chars !'").unwrap();
+    raw_string("\"hello world that cont4ain5 w3eird chars !\"").unwrap();
 }
 
 #[test]
 fn test_raw_string_invalid() {
     raw_string("").unwrap_err();
+
+    // Single quote
     raw_string("'").unwrap_err();
     raw_string("'''").unwrap_err();
     raw_string("' '  '").unwrap_err();
+
+    // Double quote
+    raw_string("\"").unwrap_err();
+    raw_string("\"\"\"").unwrap_err();
+    raw_string("\" \"  \"").unwrap_err();
+
+    // No quote
+    raw_string("hello").unwrap_err();
 }
 
 #[test]
@@ -75,7 +91,7 @@ fn test_valid_select() {
         select(&["c1", "c2"], "foo")
     );
     assert_eq!(
-        parse_sql("SELECT C1  ,  C2 ,   C3 , C4 FROM FOO").unwrap(),
+        parse_sql("SELECT 'C1'  ,  \"C2\" ,   C3 , C4 FROM 'FOO'").unwrap(),
         select(&["C1", "C2", "C3", "C4"], "FOO")
     );
 
@@ -86,10 +102,10 @@ fn test_valid_select() {
     );
     assert_eq!(
         parse_sql(
-            "sELECt   c1,   c2  \n\
-             fROm  \n\t  foo \n\
+            "sELECt   'c1',   c2  \n\
+             fROm  \n\t  \"foo\" \n\
              wHERe   \n
-                x  \n = \n\t  'bar' \n
+                'x'  \n = \n\t  'bar' \n
              "
         )
         .unwrap(),

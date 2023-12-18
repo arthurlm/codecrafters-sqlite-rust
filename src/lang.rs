@@ -39,10 +39,18 @@ peg::parser!(
             }
 
         pub rule raw_string() -> String
-            = "'" value:$([^'\'']*) "'" { value.to_string()}
+            = single_quote_string() / double_quote_string()
 
         pub rule identifier() -> String
             = v:$(['a'..='z' | 'A'..='Z' | '_']+['a'..='z' | 'A'..='Z' | '0'..='9' | '_']*) { v.to_string() }
+                / single_quote_string()
+                / double_quote_string()
+
+        rule single_quote_string() -> String
+            = "'" value:$([^'\'']*) "'" { value.to_string()}
+
+        rule double_quote_string() -> String
+            = "\"" value:$([^'"']*) "\"" { value.to_string()}
 
         // Check: https://github.com/kevinmehall/rust-peg/issues/216
         rule i(literal: &'static str)
