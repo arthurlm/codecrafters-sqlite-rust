@@ -29,7 +29,8 @@ peg::parser!(
         rule column_definition() -> ColumnDefinition
             = name:identifier() _ column_type:identifier()
                 pk:(_ i("primary") _ i("key"))?
-                ai:(_ i("autoincrement"))? {
+                ai:(_ i("autoincrement"))?
+                nn:(_ i("not") _ i("null"))? {
                 ColumnDefinition {
                     name,
                     column_type,
