@@ -10,6 +10,7 @@ pub mod walker;
 
 pub mod command {
     pub mod dot_db_info;
+    pub mod dot_page;
     pub mod dot_schema;
     pub mod dot_table;
     pub mod sql_command;

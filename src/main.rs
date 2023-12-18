@@ -15,11 +15,20 @@ fn main() -> anyhow::Result<()> {
         ".dbinfo" => {
             command::dot_db_info::exec(&mut database);
         }
-        ".tables" => {
-            command::dot_table::exec(&mut database);
+        ".page" => {
+            command::dot_page::exec(
+                &mut database,
+                env::args()
+                    .nth(3)
+                    .and_then(|x| x.parse().ok())
+                    .expect("Missing page ID"),
+            );
         }
         ".schema" => {
             command::dot_schema::exec(&mut database);
+        }
+        ".tables" => {
+            command::dot_table::exec(&mut database);
         }
         x if x.starts_with("select count(*) from ") => {
             let table_name = x.split(' ').last().expect("Missing table name");
