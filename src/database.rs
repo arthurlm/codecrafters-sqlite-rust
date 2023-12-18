@@ -51,8 +51,8 @@ impl Database {
     }
 
     pub fn schema_rows(&mut self) -> Result<Vec<SqliteSchemaRow>, SqliteError> {
-        let mut walker = CellWalker::new(self, 0)?;
-        let entries = walker.for_each_table_entry(|cell| SqliteSchemaRow::parse_cell(cell))?;
+        let mut walker = CellWalker::new(self);
+        let entries = walker.for_each_table_entry(0, |cell| SqliteSchemaRow::parse_cell(cell))?;
         Ok(entries.into_iter().flat_map(|x| x.ok()).collect())
     }
 

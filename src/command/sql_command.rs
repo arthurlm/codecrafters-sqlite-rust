@@ -20,18 +20,16 @@ fn is_included(
         // No filtering
         None => true,
         // Eval where clause
-        Some(clause) => {
-            let where_col_value = if schema_def.is_pk(&clause.column_name) {
-                cell.row_id.to_string()
+        Some(WhereClause { column_name, value }) => {
+            if schema_def.is_pk(column_name) {
+                cell.row_id.to_string() == *value
             } else {
                 let where_col_index = schema_def
-                    .column_index(&clause.column_name)
+                    .column_index(column_name)
                     .expect("Invalid WHERE column name");
 
-                cell.payload.values[where_col_index].to_string()
-            };
-
-            clause.value == where_col_value
+                cell.payload.values[where_col_index].to_string() == *value
+            }
         }
     }
 }
@@ -83,11 +81,10 @@ pub fn exec(db: &mut Database, expression: &str) {
         .collect();
 
     // PRINT value from SQL table.
-    let mut walker =
-        CellWalker::new(db, schema_row.root_page - 1).expect("Fail to create table iterator");
+    let mut walker = CellWalker::new(db);
 
     walker
-        .for_each_table_entry(|cell| {
+        .for_each_table_entry(schema_row.root_page - 1, |cell| {
             if is_included(cell, r#where.as_ref(), &schema_def) {
                 print_sql_line(cell, &column_infos);
             }
