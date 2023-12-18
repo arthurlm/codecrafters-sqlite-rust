@@ -9,9 +9,9 @@ pub mod utils;
 pub mod walker;
 
 pub mod command {
-    pub mod count;
-    pub mod db_info;
-    pub mod schema;
+    pub mod dot_db_info;
+    pub mod dot_schema;
+    pub mod dot_table;
     pub mod sql_command;
-    pub mod table;
+    pub mod sql_count;
 }

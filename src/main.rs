@@ -13,17 +13,17 @@ fn main() -> anyhow::Result<()> {
     // Parse command and act accordingly
     match command.as_str() {
         ".dbinfo" => {
-            command::db_info::exec(&mut database);
+            command::dot_db_info::exec(&mut database);
         }
         ".tables" => {
-            command::table::exec(&mut database);
+            command::dot_table::exec(&mut database);
         }
         ".schema" => {
-            command::schema::exec(&mut database);
+            command::dot_schema::exec(&mut database);
         }
         x if x.starts_with("select count(*) from ") => {
             let table_name = x.split(' ').last().expect("Missing table name");
-            command::count::exec(&mut database, table_name);
+            command::sql_count::exec(&mut database, table_name);
         }
         _ => {
             command::sql_command::exec(&mut database, &command);
